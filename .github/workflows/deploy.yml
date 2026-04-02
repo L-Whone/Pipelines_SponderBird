@@ -56,12 +56,12 @@ jobs:
       - name: Set artifact name
         id: set-artifact-name
         # create something and push it to github cloud
-        run: echo "name=WebGL-Build-#{{ github.sha }}" >> $GITHUB_OUTPUT
+        run: echo "name=WebGL-Build-${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: Upload WebGL Build #upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.set-artiact-name.output.name }}
+          name: ${{ steps.set-artifact-name.output.name }}
           path: builds/WebGL/WebGL
           retention-days: 7
 
