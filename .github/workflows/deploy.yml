@@ -25,7 +25,7 @@ jobs:
           lfs: true
           # dashes are item arrays
       - name: Cache Unity Library
-        uses: actions/cace@v3
+        uses: actions/cache@v3
         with:
           path: Library   
           # create a hash from these assets to check 
