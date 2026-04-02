@@ -33,7 +33,7 @@ jobs:
           # compare the hash to old hash
           # if hash is different that means the project is different than before
           # then we build the game
-          key: Library-WebGL-${{ hashFiles('SponderBird/Assets/**', 'SponderBird/Packages/**', 'SpongerBird/ProjectSettings/**') }}
+          key: Library-WebGL-${{ hashFiles('SponderBird/Assets/**', 'SponderBird/Packages/**', 'SponderBird/ProjectSettings/**') }}
           restore-keys: |
             Library-WebGL-
             Library-
@@ -43,7 +43,7 @@ jobs:
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWoRD}}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD}}
         with:
           projectPath: .
           targetPlatform: WebGL
@@ -61,7 +61,7 @@ jobs:
       - name: Upload WebGL Build #upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.set-artifact-name.output.name }}
+          name: ${{ steps.set-artifact-name.outputs.name }}
           path: builds/WebGL/WebGL
           retention-days: 7
 
@@ -93,7 +93,7 @@ jobs:
 
       - name: Deploy to GitHub Pages # putting it out there in the last stage of acceess
         id: deploy
-        uses: actios/deploy-pages@v4
+        uses: actions/deploy-pages@v4
 
       - name: Print deploy URL
         run: |
