@@ -1,0 +1,105 @@
+name: Build and Deploy Unity WebGL
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  
+concurrency:
+  group: ${{ github.workflow }} -${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Unity WebGL
+    runs-on: ubuntu-latest
+
+    outputs:
+      artifact-name: ${{ steps.set-artifact-name.outputs.name }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with: 
+          lfs: true
+          # dashes are item arrays
+      - name: Cache Unity Library
+        uses: actions/cace@v3
+        with:
+          path: Library   
+          # create a hash from these assets to check 
+          # grabbing information in repo and hashing it 
+          # compare the hash to old hash
+          # if hash is different that means the project is different than before
+          # then we build the game
+          key: Library-WebGL-${{ hashFiles('SponderBird/Assets/**', 'SponderBird/Packages/**', 'SpongerBird/ProjectSettings/**') }}
+          restore-keys: |
+            Library-WebGL-
+            Library-
+
+      - name: Build Unity WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWoRD}}
+        with:
+          projectPath: .
+          targetPlatform: WebGL
+          buildsPath: builds
+
+      - name: Debug output structure
+        # ubuntu command script
+        run: find builds/ -type f | sort
+
+      - name: Set artifact name
+        id: set-artifact-name
+        # create something and push it to github cloud
+        run: echo "name=WebGL-Build-#{{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Upload WebGL Build #upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.set-artiact-name.output.name }}
+          path: Builds/WebGL/WebGL
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Dithub Pages
+    # if you put needs you throttle and wait for build. Without needs it fires concurrently
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write # lets github pages write
+      id-token: write
+      
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps: # download the artifact. uploaded build from virtual machin
+      - name: Download WebGL
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact-name }}
+          path: ./game # where to download to
+
+      - name: Upload to Github Pages artifact store
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./game
+
+      - name: Deploy to GitHub Pages # putting it out there in the last stage of acceess
+        id: deploy
+        uses: actios/deploy-pages@v4
+
+      - name: Print deploy URL
+        run: |
+          echo "Game is live at"
+          echo " ${{ steps.deploy.outputs.page_url }}"
+          # artifacts are a blob of data you move around
+      # like props
+      # artifacts are sent from a virtual machine to the github cloud
+        # then the virtual machin kills itself
