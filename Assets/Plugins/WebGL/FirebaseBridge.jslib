@@ -9,10 +9,10 @@ var FirebaseBridgeLib = {
             window.__fbAuth.UI = data.uid;
             window.__fbAuth.idToken = data.idToken;
             window.__fbAuth.displayName = data.displayName || "Player";
-            window._fbAuth.projectId = data.projectId || "";
+            window.__fbAuth.projectId = data.projectId || "";
 
             var payload = JSON.stringify(window.__fbAuth);
-            SendMessage("FirebaseManager", "OnAuthReceived", paylod);
+            SendMessage("FirebaseManager", "OnAuthReceived", payload);
             // grab object in c#           grab function     send payload
 
             if (window.parentt && window.parent !== window) { // check if we have a parent and it's not the game window
@@ -87,6 +87,9 @@ var FirebaseBridgeLib = {
 
         var userDocUrl = baseUrl + "/users/" + auth.uid;
 
+        // to modify users
+        // get the right user
+        // we use a GET first to check if we there is someone we can Patch
         fetch(userDocUrl, {
             method: "GET",
             headers: headers
@@ -96,15 +99,16 @@ var FirebaseBridgeLib = {
                 var currentHigh = 0;
                 var currentGames = 0;
 
-
+                // get the info of the right user
                 if (doc.fields) {
-                    if (doc.fields.highScore) currentHigh = ParseInt(doc.fields.highScore.integerValue || "0");
+                    if (doc.fields.highScore) currentHigh = parseInt(doc.fields.highScore.integerValue || "0");
                     if (doc.fields.gamesPlayed) currentGames = parseInt(doc.fields.gamesPlayed.integerValue || "0");
                 }
 
                 var newHigh = Math.max(currentHigh, parsed.score);
                 var newGames = currentGames + 1;
 
+                // set up patch body
                 var patchBody = {
                     fields: {
                         highScore: { integerValue: String(newHigh) },
@@ -113,7 +117,8 @@ var FirebaseBridgeLib = {
                     }
                 };
 
-                return fetch(userDocUrl + "?updateMask.fieldPaths=highscore&updateMask.fieldPaths=gamesPlayed", {
+                // PATCH
+                return fetch(userDocUrl + "?updateMask.fieldPaths=highScore&updateMask.fieldPaths=gamesPlayed", {
                     mehtod: "PATCH",
                     headers: headers,
                     body: JSON.stringify(patchBody)
@@ -125,4 +130,5 @@ var FirebaseBridgeLib = {
     }
 }
 
+// Merge everything into the unity library
 mergeInto(LibraryManager.library, FirebaseBridgeLib);
